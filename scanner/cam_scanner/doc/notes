@@ -1,0 +1,124 @@
+. mesh reconstruction
+ . a post here: http://meshlabstuff.blogspot.com/search?updated-max=2009-11-03T01%3A09%3A00-08%3A00&max-results=7
+ . summarize of mesh reconstruction methods: http://lcni.uoregon.edu/~mark/Projects/Brain_casting/Point_cloud_to_mesh.html
+ . papers on mesh reconstruction: http://www.cs.jhu.edu/~misha/
+ . http://wiki.mcneel.com/labs/pointsetreconstruction
+ . http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Surface_reconstruction_points_3/Chapter_main.html
+  . normal reconstruction: http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Point_set_processing_3/Chapter_main.html#chap:point_set_processing_3
+
+. software chain
+ . in a first time, the scanning program will be implemented as a toolchain.
+ In next version a gui will avoid the command line usage.
+
+ . scanning is done by creating a new project. a project is first initialized
+ with default settings that can be changed by the user. Then calibration and
+ scanning sequences  are acquired. If not yet done, a calibration step must
+ performed. Scanning is  finally done and outputs a pointcloud into a given
+ directory. The toolchain consists of the following programs:
+  . init projname
+   . initialize a directory for the project projname
+  . capture projname {calib,scan}
+   . capture calibration and scanning sequences for the projname
+  . calib projname
+  . scan projname
+
+ . the projname directory is structured as followed:
+  . conf.xml
+   . <cam_file>
+   . <calib_frames>
+   . <scans>
+    . <scan>
+     . <id>
+     . <angle>
+     . <data_file>
+  . cam.xml
+   . <params>
+    . index
+    . width
+    . height
+   . <calib>
+    . <intrinsic>
+     . focal length, fc
+     . principal point, cc
+     . skew coeff, alpha_c
+     . distortion coeff, kc
+     . focal length uncertainty, fc_error
+     . principal point uncertainty, cc_error
+     . skew uncertainty, alpha_c_error
+     . distortion uncertainty, kc_error
+     . image size, nx, ny
+     . ignored, n_ima, est_fc, est_aspect_ratio, center_optim, est_alpha, est_dist
+
+    . <extrinsic>
+     . rotation vector, omc_kk
+     . translation vector, tc_kk
+
+  . calib_frames/{000000, 000001, ...}.jpg
+  . scan_frames/{000000, 000001, ...}.jpg
+
+ . the resulting cloud can then be processed using a cloud edition program,
+  for instance meshlab.
+
+ . note that some calibration files can be shared across projects
+
+. intrinsic
+ . fc, cc, kc, alpha_c, nx, ny
+. extrinsic
+ . tc_{h,v}, rc_{h,v}, h_{h,v}
+ . where h (resp. v) stands for the horizontal (resp vertical) plane
+
+. scanning theory of operation
+ . retrieve scene information
+  . get 2 points on the middle line
+  . get bounding box for the vertical and horizontal shadow boundaries
+ . derive extrinsic params
+  . load camera intrinsic params, from calibration procedure
+  . derive extrinsic params for horizontal and vertical frame using first frame
+ . determine the implicit representation of shadow planes
+  . estimate params of the reference planes using least square
+  . determine the per frame shadow plane params
+ . reconstruction
+  . cast a ray per pixel and intersect with the shadow plane
+ . output points
+
+. todo
+ . how to calibration
+  -> read from matlab file
+  -> get from opencv + slcalib
+
+ . user interface
+  . see in realtime what modifying a parameter does on the point cloud
+   . frame reconstruction range
+   . skip / keep frame
+   . do an acquisition, insert a frame
+   . clipping volume
+   . rejection distance ...
+   . play on calibration parameters...
+  . color points that are subject to a given constraints
+   -> icon: show all points
+   -> substraction between all set and constrainted point set
+
+ . meshlab plugin
+  . lot of code redundant if
+
+ . dont use std::list for point reconstruction. their number is known from
+ the previous pass.
+
+. checks
+ . matrices from calibration [x]
+
+ . line equations [ guess ok ]
+
+ . estimtate_reference_planes: [x]
+
+ . estimate_shadow_plane [?]
+  . camera_center [x]
+  . pixel_to_ray [?]
+   -> il faut verifier avec un programme standalone
+  . intersect_line_plane [?]
+   -> seems ok
+
+ . reconstruct points [?]
+  . ssems to work
+
+ . final ascii output [!]
